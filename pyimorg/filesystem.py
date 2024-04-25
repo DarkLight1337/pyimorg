@@ -1,14 +1,16 @@
 from __future__ import annotations
 
+from collections.abc import Collection
 import hashlib
 import mimetypes
 from pathlib import Path
 import shutil
 from typing import Literal
 
+from .func import map_mt_with_tqdm
 from .logger import get_logger
 
-__all__ = ['is_image', 'mkdir_p', 'cp_p']
+__all__ = ['is_image', 'mkdir_p', 'mkdir_p_parallel', 'cp_p', 'cp_p_parallel']
 
 logger = get_logger()
 
@@ -39,6 +41,29 @@ def mkdir_p(path: Path) -> None:
     """
     return path.mkdir(parents=True, exist_ok=True)
 
+def _mkdir_p_passthrough_on_fail(path: Path) -> Path | None:
+    """As :func:`mkdir_p`, but returns the original arguments if the operation fails."""
+    try:
+        mkdir_p(path)
+    except OSError:
+        logger.warning('Failed to create directory (%s)', path, exc_info=True)
+        return path
+
+def mkdir_p_parallel(path_multi: Collection[Path], *, n_jobs: int, desc: str, retry_count: int = 5):
+    """Runs :func:`mkdir_p` in parallel and attempts to retry failed invocations."""
+    while len(path_multi) > 0 and retry_count > 0:
+        path_multi = [
+            result for result in map_mt_with_tqdm(
+                path_multi,
+                _mkdir_p_passthrough_on_fail,
+                n_jobs=n_jobs,
+                desc=desc,
+            )
+            if result is not None
+        ]
+
+        retry_count -= 1
+
 def cp_p(src_dst: tuple[Path, Path]):
     """
     As the Unix command `cp -p`, which copies a file while preserving file metadata
@@ -46,3 +71,26 @@ def cp_p(src_dst: tuple[Path, Path]):
     """
     src, dst = src_dst
     return shutil.copy2(src, dst)
+
+def _cp_p_passthrough_on_fail(src_dst: tuple[Path, Path]) -> tuple[Path, Path] | None:
+    """As :func:`cp_p`, but returns the original arguments if the operation fails."""
+    try:
+        cp_p(src_dst)
+    except OSError:
+        logger.warning('Failed to copy file (%s) to destination (%s)', *src_dst, exc_info=True)
+        return src_dst
+
+def cp_p_parallel(src_dst_multi: Collection[tuple[Path, Path]], *, n_jobs: int, desc: str, retry_count: int = 5):
+    """Runs :func:`cp_p` in parallel and attempts to retry failed invocations."""
+    while len(src_dst_multi) > 0 and retry_count > 0:
+        src_dst_multi = [
+            result for result in map_mt_with_tqdm(
+                src_dst_multi,
+                _cp_p_passthrough_on_fail,
+                n_jobs=n_jobs,
+                desc=desc,
+            )
+            if result is not None
+        ]
+
+        retry_count -= 1

@@ -10,7 +10,7 @@ import click
 from tqdm import tqdm
 
 from ..exif import read_captured_timestamp
-from ..filesystem import cp_p, is_image, mkdir_p
+from ..filesystem import cp_p_parallel, is_image, mkdir_p_parallel
 from ..func import map_mt_with_tqdm
 from ..logger import set_logger_level
 
@@ -84,16 +84,14 @@ def groupby(
         for src_img_path in src_img_paths
     }
 
-    map_mt_with_tqdm(
+    mkdir_p_parallel(
         {path.parent for path in src_img_path_to_dst_img_path.values()},
-        mkdir_p,
         n_jobs=threads,
         desc='Creating output directories',
     )
 
-    map_mt_with_tqdm(
+    cp_p_parallel(
         src_img_path_to_dst_img_path.items(),
-        cp_p,
         n_jobs=threads,
         desc='Writing output images',
     )

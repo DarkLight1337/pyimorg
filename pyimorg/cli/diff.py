@@ -6,7 +6,7 @@ from typing import Literal
 
 import click
 
-from ..filesystem import cksum, cp_p, is_image, mkdir_p
+from ..filesystem import cksum, cp_p_parallel, is_image, mkdir_p_parallel
 from ..func import map_mt_with_tqdm
 from ..logger import set_logger_level
 
@@ -85,16 +85,14 @@ def diff(
         for img_hash in hashes_in_both
     }
 
-    map_mt_with_tqdm(
+    mkdir_p_parallel(
         {path.parent for path in in_both_src_path_to_dst_path.values()},
-        mkdir_p,
         n_jobs=threads,
         desc='Creating output directories for images that exist in both',
     )
 
-    map_mt_with_tqdm(
+    cp_p_parallel(
         in_both_src_path_to_dst_path.items(),
-        cp_p,
         n_jobs=threads,
         desc='Writing output images that exist in both',
     )
@@ -104,16 +102,14 @@ def diff(
         for img_hash in hashes_in_src1_only
     }
 
-    map_mt_with_tqdm(
+    mkdir_p_parallel(
         {path.parent for path in in_src1_only_src_path_to_dst_path.values()},
-        mkdir_p,
         n_jobs=threads,
         desc='Creating output directories for images that exist in src1 only',
     )
 
-    map_mt_with_tqdm(
+    cp_p_parallel(
         in_src1_only_src_path_to_dst_path.items(),
-        cp_p,
         n_jobs=threads,
         desc='Writing output images that exist in src1 only',
     )
@@ -123,16 +119,14 @@ def diff(
         for img_hash in hashes_in_src2_only
     }
 
-    map_mt_with_tqdm(
+    mkdir_p_parallel(
         {path.parent for path in in_src2_only_src_path_to_dst_path.values()},
-        mkdir_p,
         n_jobs=threads,
         desc='Creating output directories for images that exist in src2 only',
     )
 
-    map_mt_with_tqdm(
+    cp_p_parallel(
         in_src2_only_src_path_to_dst_path.items(),
-        cp_p,
         n_jobs=threads,
         desc='Writing output images that exist in src2 only',
     )
