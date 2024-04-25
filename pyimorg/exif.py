@@ -73,6 +73,5 @@ def read_captured_timestamp(img_path: Path) -> datetime | None:
         if captured_timestamp is not None:
             return captured_timestamp
 
-    logger.info('Image (%s) does not have a timestamp when it was captured.', img_path)
-    logger.info('Image (%s) EXIF attributes:\n%s', img_path, exif_tags)
+    logger.info('Image (%s) does not have a timestamp when it was captured. EXIF attributes:\n%s', img_path, exif_tags)
     return None

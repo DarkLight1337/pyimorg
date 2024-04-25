@@ -5,6 +5,7 @@ import hashlib
 import mimetypes
 from pathlib import Path
 import shutil
+import time
 from typing import Literal
 
 from .func import map_mt_with_tqdm
@@ -46,12 +47,15 @@ def _mkdir_p_passthrough_on_fail(path: Path) -> Path | None:
     try:
         mkdir_p(path)
     except OSError:
-        logger.warning('Failed to create directory (%s)', path, exc_info=True)
         return path
 
 def mkdir_p_parallel(path_multi: Collection[Path], *, n_jobs: int, desc: str, retry_count: int = 5):
     """Runs :func:`mkdir_p` in parallel and attempts to retry failed invocations."""
-    while len(path_multi) > 0 and retry_count > 0:
+    if retry_count <= 0:
+        msg = '`retry_count` must be a positive integer'
+        raise ValueError(msg)
+
+    for i in range(retry_count + 1):
         path_multi = [
             result for result in map_mt_with_tqdm(
                 path_multi,
@@ -62,11 +66,18 @@ def mkdir_p_parallel(path_multi: Collection[Path], *, n_jobs: int, desc: str, re
             if result is not None
         ]
 
-        retry_count -= 1
+        if len(path_multi) == 0:
+            return
 
-    if len(path_multi) > 0:
-        msg = f"Failed to create directories: {path_multi}"
-        raise RuntimeError(msg)
+        if i < retry_count:
+            logger.warning('Failed to create %s directories. Retrying...', len(path_multi), exc_info=True)
+            time.sleep(1)
+        else:
+            msg = f"Failed to create directories: {path_multi}"
+            raise RuntimeError(msg)
+
+    msg = "Should never be reached"
+    raise AssertionError(msg)
 
 def cp_p(src_dst: tuple[Path, Path]):
     """
@@ -81,12 +92,15 @@ def _cp_p_passthrough_on_fail(src_dst: tuple[Path, Path]) -> tuple[Path, Path] |
     try:
         cp_p(src_dst)
     except OSError:
-        logger.warning('Failed to copy file (%s) to destination (%s)', *src_dst, exc_info=True)
         return src_dst
 
 def cp_p_parallel(src_dst_multi: Collection[tuple[Path, Path]], *, n_jobs: int, desc: str, retry_count: int = 5):
     """Runs :func:`cp_p` in parallel and attempts to retry failed invocations."""
-    while len(src_dst_multi) > 0 and retry_count > 0:
+    if retry_count <= 0:
+        msg = '`retry_count` must be a positive integer'
+        raise ValueError(msg)
+
+    for i in range(retry_count + 1):
         src_dst_multi = [
             result for result in map_mt_with_tqdm(
                 src_dst_multi,
@@ -97,9 +111,16 @@ def cp_p_parallel(src_dst_multi: Collection[tuple[Path, Path]], *, n_jobs: int, 
             if result is not None
         ]
 
-        retry_count -= 1
+        if len(src_dst_multi) == 0:
+            return
 
-    if len(src_dst_multi) > 0:
-        src_dst_multi_str = [f"{src} -> {dst}" for src, dst in src_dst_multi]
-        msg = f"Failed to copy files: {src_dst_multi_str}"
-        raise RuntimeError(msg)
+        if i < retry_count:
+            logger.warning('Failed to copy %s files. Retrying...', len(src_dst_multi), exc_info=True)
+            time.sleep(1)
+        else:
+            src_dst_multi_str = [f"{src} -> {dst}" for src, dst in src_dst_multi]
+            msg = f"Failed to copy files: {src_dst_multi_str}"
+            raise RuntimeError(msg)
+
+    msg = "Should never be reached"
+    raise AssertionError(msg)
