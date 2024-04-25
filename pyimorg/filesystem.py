@@ -64,6 +64,10 @@ def mkdir_p_parallel(path_multi: Collection[Path], *, n_jobs: int, desc: str, re
 
         retry_count -= 1
 
+    if len(path_multi) > 0:
+        msg = f"Failed to create directories: {path_multi}"
+        raise RuntimeError(msg)
+
 def cp_p(src_dst: tuple[Path, Path]):
     """
     As the Unix command `cp -p`, which copies a file while preserving file metadata
@@ -94,3 +98,8 @@ def cp_p_parallel(src_dst_multi: Collection[tuple[Path, Path]], *, n_jobs: int, 
         ]
 
         retry_count -= 1
+
+    if len(src_dst_multi) > 0:
+        src_dst_multi_str = [f"{src} -> {dst}" for src, dst in src_dst_multi]
+        msg = f"Failed to copy files: {src_dst_multi_str}"
+        raise RuntimeError(msg)
