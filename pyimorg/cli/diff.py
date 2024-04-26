@@ -6,8 +6,7 @@ from typing import Literal
 
 import click
 
-from ..filesystem import cksum, cp_p_parallel, is_image, mkdir_p_parallel
-from ..func import map_mt_with_tqdm
+from ..filesystem import cksum_parallel, cp_p_parallel, is_image, mkdir_p_parallel
 from ..logger import set_logger_level
 
 __all__ = ['diff']
@@ -51,9 +50,9 @@ def diff(
     set_logger_level(logging.INFO)
 
     src1_img_paths = [path for path in Path(src1).rglob('*') if is_image(path)]
-    src1_img_hashes = map_mt_with_tqdm(
+    src1_img_hashes = cksum_parallel(
         src1_img_paths,
-        lambda path: cksum(path, digest=hasher),
+        digest=hasher,
         n_jobs=threads,
         desc='Hashing images from src1',
     )
@@ -63,9 +62,9 @@ def diff(
     }
 
     src2_img_paths = [path for path in Path(src2).rglob('*') if is_image(path)]
-    src2_img_hashes = map_mt_with_tqdm(
+    src2_img_hashes = cksum_parallel(
         src2_img_paths,
-        lambda path: cksum(path, digest=hasher),
+        digest=hasher,
         n_jobs=threads,
         desc='Hashing images from src2',
     )
