@@ -41,10 +41,17 @@ def cksum(path: Path, *, digest: Literal['sha256', 'sha512']) -> str:
 
     return hasher.hexdigest()
 
-def cksum_parallel(path_multi: Collection[Path], *, digest: Literal['sha256', 'sha512'], n_jobs: int, desc: str):
+def cksum_parallel(
+    path_multi: Collection[Path],
+    *,
+    digest: Literal['sha256', 'sha512'],
+    n_jobs: int,
+    desc: str,
+    disable_progbar: bool,
+):
     """Runs :func:`cksum` in parallel and attempts to retry failed invocations."""
     mapper = map_with_retry(OSError, count=5, delay_secs=1.0) \
-        (functools.partial(map_mt_with_tqdm, n_jobs=n_jobs, desc=desc))
+        (functools.partial(map_mt_with_tqdm, n_jobs=n_jobs, desc=None if disable_progbar else desc))
 
     try:
         return mapper(path_multi, functools.partial(cksum, digest=digest))
@@ -62,10 +69,16 @@ def mkdir_p(path: Path) -> None:
     """
     return path.mkdir(parents=True, exist_ok=True)
 
-def mkdir_p_parallel(path_multi: Collection[Path], *, n_jobs: int, desc: str):
+def mkdir_p_parallel(
+    path_multi: Collection[Path],
+    *,
+    n_jobs: int,
+    desc: str,
+    disable_progbar: bool,
+):
     """Runs :func:`mkdir_p` in parallel and attempts to retry failed invocations."""
     mapper = map_with_retry(OSError, count=5, delay_secs=1.0) \
-        (functools.partial(map_mt_with_tqdm, n_jobs=n_jobs, desc=desc))
+        (functools.partial(map_mt_with_tqdm, n_jobs=n_jobs, desc=None if disable_progbar else desc))
 
     try:
         return mapper(path_multi, mkdir_p)
@@ -84,10 +97,16 @@ def cp_p(src_dst: tuple[Path, Path]):
     src, dst = src_dst
     return shutil.copy2(src, dst)
 
-def cp_p_parallel(src_dst_multi: Collection[tuple[Path, Path]], *, n_jobs: int, desc: str):
+def cp_p_parallel(
+    src_dst_multi: Collection[tuple[Path, Path]],
+    *,
+    n_jobs: int,
+    desc: str,
+    disable_progbar: bool,
+):
     """Runs :func:`cp_p` in parallel and attempts to retry failed invocations."""
     mapper = map_with_retry(OSError, count=5, delay_secs=1.0) \
-        (functools.partial(map_mt_with_tqdm, n_jobs=n_jobs, desc=desc))
+        (functools.partial(map_mt_with_tqdm, n_jobs=n_jobs, desc=None if disable_progbar else desc))
 
     try:
         return mapper(src_dst_multi, cp_p)

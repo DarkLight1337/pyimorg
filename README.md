@@ -58,3 +58,8 @@ pyimorg groupby <src_dir> <out_dir>
 
 1. [Setup](#setup) the development environment.
 2. Run `poetry run deptry . && poetry run ruff check . && poetry run pyright .` to lint the code.
+
+### Test
+
+1. [Setup](#setup) the development environment.
+2. Run `poetry run -- pytest && coverage report && coverage html -d coverage --show-contexts` to test the code and output the coverage report.

@@ -23,7 +23,7 @@ def map_mp_with_tqdm(
     fn: Callable[[T], R],
     *,
     n_jobs: int,
-    desc: str,
+    desc: str | None,
 ) -> Collection[R]:
     """
     Executes a function in parallel using multiprocessing.
@@ -39,8 +39,9 @@ def map_mp_with_tqdm(
         fn,
         n_jobs=n_jobs,
         exception_behaviour='immediate',
-        desc=desc,
+        desc='' if desc is None else desc,
         total=len(arr),
+        disable=desc is None,
     )
 
 def map_mt_with_tqdm(
@@ -48,7 +49,7 @@ def map_mt_with_tqdm(
     fn: Callable[[T], R],
     *,
     n_jobs: int,
-    desc: str,
+    desc: str | None,
 ) -> Collection[R]:
     """
     Executes a function in parallel using multithreading.
@@ -64,8 +65,9 @@ def map_mt_with_tqdm(
         fn,
         n_jobs=n_jobs,
         exception_behaviour='immediate',
-        desc=desc,
+        desc='' if desc is None else desc,
         total=len(arr),
+        disable=desc is None,
     )
 
 

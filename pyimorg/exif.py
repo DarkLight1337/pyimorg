@@ -9,9 +9,10 @@ from PIL import ExifTags, Image, UnidentifiedImageError
 
 from .logger import get_logger
 
-__all__ = ['read_exif_tags', 'read_captured_timestamp']
+__all__ = ['read_exif_tags', 'EXIF_DATETIME_FORMAT', 'read_captured_timestamp']
 
 logger = get_logger()
+
 
 def read_exif_tags(img_path: Path) -> Mapping[int, object]:
     """Reads the EXIF tags stored in an image file."""
@@ -47,6 +48,9 @@ def read_exif_tags(img_path: Path) -> Mapping[int, object]:
         logger.warning('File (%s) cannot be opened as an image.', img_path, exc_info=True)
         return {}
 
+
+EXIF_DATETIME_FORMAT = r'%Y:%m:%d %H:%M:%S'
+
 def _try_parse_exif_datetime(exif_tags: Mapping[int, object], tag_key: int, *, img_path: Path) -> datetime | None:
     tag_value = exif_tags.get(tag_key)
     if tag_value is None:
@@ -57,10 +61,11 @@ def _try_parse_exif_datetime(exif_tags: Mapping[int, object], tag_key: int, *, i
         return None
 
     try:
-        return datetime.strptime(tag_value, r'%Y:%m:%d %H:%M:%S').astimezone()
+        return datetime.strptime(tag_value, EXIF_DATETIME_FORMAT).astimezone()
     except ValueError:
         logger.info('Image (%s) has invalid datetime format for tag %s. Reason: Not in "YYYY:MM:DD HH:MM:SS" form.', img_path, tag_key)
         return None
+
 
 def read_captured_timestamp(img_path: Path) -> datetime | None:
     """Reads the timestamp when an image was captured, based on its EXIF tags."""
