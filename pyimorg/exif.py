@@ -5,6 +5,7 @@ from datetime import datetime
 from pathlib import Path
 
 import exifread
+from exifread.classes import IfdTag
 from PIL import ExifTags, Image, UnidentifiedImageError
 
 from .logger import get_logger
@@ -22,25 +23,16 @@ def read_exif_tags(img_path: Path) -> Mapping[int, object]:
     except UnidentifiedImageError:
         try:
             with img_path.open('rb') as f:
-                tags = exifread.process_file(f)  # pyright: ignore[reportArgumentType]
+                tags = exifread.process_file(f, details=False)  # pyright: ignore[reportArgumentType]
 
-            pil_exif_tags: dict[int, object] = {}
-            for exif_key, value in tags.items():
-                ifd_name, tag_name = exif_key.split(' ')  # pyright: ignore[reportUnusedVariable]
+            exif_tags: dict[int, object] = {}
+            for tag_info in tags.values():
+                if isinstance(tag_info, IfdTag):
+                    exif_tags[tag_info.tag] = tag_info.values  # noqa: PD011
+                else:
+                    logger.info('Skipping unrecognized EXIF tag (%s).', tag_info)
 
-                # Check the following categories in the following order of preference
-                pil_exif_key = getattr(ExifTags.Base, tag_name, None)
-                if pil_exif_key is None:
-                    pil_exif_key = getattr(ExifTags.GPS, tag_name, None)
-                if pil_exif_key is None:
-                    pil_exif_key = getattr(ExifTags.IFD, tag_name, None)
-                if pil_exif_key is None:
-                    pil_exif_key = getattr(ExifTags.LightSource, tag_name, None)
-
-                if pil_exif_key is not None:
-                    pil_exif_tags[pil_exif_key] = value
-
-            return pil_exif_tags
+            return exif_tags
         except Exception:
             logger.warning('File (%s) cannot be opened as an image.', img_path, exc_info=True)
             return {}
@@ -57,13 +49,19 @@ def _try_parse_exif_datetime(exif_tags: Mapping[int, object], tag_key: int, *, i
         return None
 
     if not isinstance(tag_value, str):
-        logger.info('Image (%s) has invalid datetime format for tag %s. Reason: Not a string.', img_path, tag_key)
+        logger.info(
+            'Image (%s) has invalid datetime format for tag %s. Reason: Not a string (found type: %s).',
+            img_path, tag_key, type(tag_value).__name__,
+        )
         return None
 
     try:
         return datetime.strptime(tag_value, EXIF_DATETIME_FORMAT).astimezone()
     except ValueError:
-        logger.info('Image (%s) has invalid datetime format for tag %s. Reason: Not in "YYYY:MM:DD HH:MM:SS" form.', img_path, tag_key)
+        logger.info(
+            'Image (%s) has invalid datetime format for tag %s. Reason: Not in "YYYY:MM:DD HH:MM:SS" form (found value: %s).',
+            img_path, tag_key, tag_value,
+        )
         return None
 
 

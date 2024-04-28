@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "pyimorg"
-version = "1.0.5"
+version = "1.0.6"
 description = "Command-line tool for organizing images"
 license = "MIT"
 authors = [
@@ -196,8 +196,11 @@ reportUnnecessaryTypeIgnoreComment = "information"
 # reportUnusedCallResult = "warning"
 
 [tool.pytest.ini_options]
-addopts = "--cov=pyimorg --cov-report=term-missing --cov-branch --cov-context=test"
+addopts = "--cov=pyimorg --cov-report=term-missing --cov-report html:coverage --cov-branch --cov-context=test"
 testpaths = ["test"]
+
+[tool.coverage.html]
+show_contexts = true
 
 [tool.coverage.report]
 exclude_also = [

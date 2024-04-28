@@ -25,7 +25,8 @@ jobs:
     steps:
       - name: Checkout Git repository
         uses: actions/checkout@v4
-      - uses: ./.github/actions/setup
+      - name: Setup environment
+        uses: ./.github/actions/setup
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install repository
@@ -56,10 +57,7 @@ jobs:
           poetry lock --no-update
           poetry install --with dev
       - name: Pytest with code coverage
-        run: |
-          poetry run -- pytest -n auto --hypothesis-profile=ci
-          poetry run -- coverage report
-          poetry run -- coverage html -d coverage --show-contexts
+        run: poetry run -- pytest -n auto --hypothesis-profile=ci
       - name: Archive code coverage results
         uses: actions/upload-artifact@v4
         with:
