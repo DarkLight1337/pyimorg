@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "pyimorg"
-version = "1.0.6"
+version = "1.0.7"
 description = "Command-line tool for organizing images"
 license = "MIT"
 authors = [
@@ -21,7 +21,7 @@ classifiers = [
 ]
 
 [tool.poetry.scripts]
-pyimorg = "pyimorg:cli"
+pyimorg = "pyimorg.cli:cli"
 
 [tool.poetry.dependencies]
 python = "^3.8"

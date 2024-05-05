@@ -9,7 +9,7 @@ from hypothesis import note, strategies as st
 from jsoncomparison import NO_DIFF, Compare as CompareJSON
 from PIL import ExifTags, Image
 
-from pyimorg.cli import Group, Hasher
+from pyimorg import Group, Hasher
 from pyimorg.exif import EXIF_DATETIME_FORMAT
 from pyimorg.filesystem import mkdir_p
 
