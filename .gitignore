@@ -4,5 +4,4 @@ __pycache__/
 .coverage.*
 
 .hypothesis/
-.pytest_cache/
 .images_test/
